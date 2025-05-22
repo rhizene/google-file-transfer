@@ -20,7 +20,7 @@ async function transferFile(authClient, fileId, emailAddress) {
         .then(()=>console.log('File exists'));
     const emailHasPermission = await checkPermission(drive, fileId, emailAddress);
 
-    // if(emailHasPermission) return;
+    if(emailHasPermission) return;
 
     try {
         console.log(`Creating file transfer request for ${emailAddress}...`);
@@ -30,7 +30,19 @@ async function transferFile(authClient, fileId, emailAddress) {
             transferOwnership: false,
         });
 
-        
+        const newOwnerPermissionId = await getOwnerPermissionId(drive, fileId, emailAddress);
+
+
+        const transferFileResponse = await drive.permissions.update({
+            fileId: fileId,
+            permissionId: newOwnerPermissionId,
+            transferOwnership: true,
+            sendNotification: true,
+            requestBody: {
+                role: 'owner',
+            },
+        });
+        console.log('File Ownership Transfer Success');
         return transferFileResponse.data;
     } catch(error) {
         console.error('File Ownership transfer failed: ', error);
